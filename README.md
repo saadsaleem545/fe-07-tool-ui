@@ -32,3 +32,18 @@ Inspects a website URL and returns basic metadata.
 {
   url: string;
 }
+
+
+
+
+## FE-AA1 — Buttons with a Brain
+
+### Motion & State Choices
+
+The button uses short, smooth transitions so each state change feels intentional instead of abrupt.
+
+Normal hover, focus, and state transitions use around 200–300ms. This keeps the interface responsive while still making changes noticeable.
+
+Loading, success, and error states provide clear feedback so the user can understand what is happening. The interaction also prevents repeated clicks while an action is running and provides visible keyboard focus feedback.
+
+The goal was to make the button communicate its current state clearly instead of simply changing its text or color instantly.
