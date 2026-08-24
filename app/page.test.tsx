@@ -1,8 +1,10 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { act } from "react";
+import { fireEvent, render, screen, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import Home from "./page";
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
@@ -106,13 +108,14 @@ describe("Generate button", () => {
 
   it("can be focused with the keyboard", () => {
     render(<Home />);
-    
+
     const button = screen.getByRole("button", {
-        name: "Generate",
+      name: "Generate",
     });
 
-  button.focus();
+    button.focus();
 
-  expect(button).toHaveFocus();
+    expect(button).toHaveFocus();
+  });
 });
-});
+
