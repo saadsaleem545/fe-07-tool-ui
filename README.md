@@ -1,325 +1,531 @@
 # FE-07 — Generative UI Tool Results Demo
 
-A production-ready Generative UI demo built with **Next.js, React, AI SDK, Google Gemini, Zod, and Tailwind CSS**.
+A Generative UI website inspection application built with **Next.js, React, AI SDK, Google Gemini, Zod, TypeScript, and Tailwind CSS**.
 
-The application provides an AI-powered website inspection assistant. Users can ask the assistant to inspect a website, the AI calls a server-side tool, and the tool result is rendered as structured UI instead of exposing raw JSON.
+The application allows a user to provide a website URL. Google Gemini can call a server-side `inspectWebsite` tool, which validates the URL, fetches the website, extracts basic metadata, and returns a structured result that is rendered as a readable UI instead of exposing raw tool JSON.
+
+---
 
 ## Live Demo
 
-**Production URL:** Add the deployed Vercel URL here after deployment.
+**Production URL:** To be added after deployment.
+
+**GitHub Repository:**  
+https://github.com/saadsaleem545/fe-07-tool-ui
+
+---
+
+## Project Overview
+
+This project demonstrates the core concepts of **Generative UI and AI tool calling**.
+
+Instead of simply returning text from an AI model, the application allows the AI to use a server-side tool and then transforms the structured tool result into a user-friendly interface.
+
+The project demonstrates:
+
+- AI model integration
+- Server-side tool execution
+- Tool input validation with Zod
+- Generative UI concepts
+- Structured tool results
+- Loading states
+- Success states
+- Error handling
+- Streaming AI responses
+- Automated frontend testing
+- Server-side request validation
+
+---
 
 ## Features
 
-* AI-powered website inspection assistant
-* Google Gemini integration through the AI SDK
-* Server-side `inspectWebsite` tool
-* Zod-based tool input validation
-* Structured tool results rendered in the UI
-* Tool lifecycle states
-* Loading, success, and error states
-* Streaming AI responses
-* Responsive Tailwind CSS interface
-* Server-side environment variable usage
-* Request validation and input limits
-* Streaming route timeout protection
+- AI-powered website inspection
+- Google Gemini integration through AI SDK
+- Server-side `inspectWebsite` tool
+- Zod URL validation
+- Website metadata extraction
+- HTTP status detection
+- Page title extraction
+- Meta description extraction
+- Structured tool result UI
+- Loading state while the tool is executing
+- Success result state
+- Error state
+- Responsive Tailwind CSS interface
+- Server-side environment variables
+- Request size limits
+- Maximum message limits
+- Streaming timeout protection
+- Automated Vitest tests
+- TypeScript support
+
+---
 
 ## Tech Stack
 
-| Technology    | Purpose                                 |
-| ------------- | --------------------------------------- |
-| Next.js 16    | React framework and application routing |
-| React 19      | User interface                          |
-| AI SDK        | AI streaming and tool calling           |
-| Google Gemini | AI model                                |
-| Zod           | Tool input validation                   |
-| Tailwind CSS  | Styling                                 |
-| TypeScript    | Type safety                             |
-| Vitest        | Testing                                 |
+| Technology | Purpose |
+|---|---|
+| Next.js 16 | React framework and application routing |
+| React 19 | User interface |
+| TypeScript | Type safety |
+| AI SDK | AI streaming and tool calling |
+| Google Gemini | AI model |
+| Zod | Runtime input validation |
+| Tailwind CSS | UI styling |
+| Vitest | Automated testing |
+| Testing Library | Component testing |
 
-## How It Works
+---
+
+# How It Works
 
 The application follows this flow:
-
-1. The user enters a request in the chat interface.
-2. The request is sent to `/api/chat`.
-3. The server converts the UI messages into model messages.
-4. Google Gemini processes the request.
-5. When a website needs to be inspected, Gemini calls the `inspectWebsite` tool.
-6. The server validates the tool input with Zod.
-7. The website metadata is inspected server-side.
-8. The structured tool result is returned to the AI.
-9. The AI explains the result to the user.
-10. The interface renders the result as a readable UI component.
-
-### Architecture
 
 ```text
 User
   |
   v
-Next.js UI
+Website Inspector UI
   |
   v
 /api/chat
   |
-  +----> Google Gemini
+  v
+Google Gemini
   |
-  +----> inspectWebsite tool
-              |
-              v
-        Website metadata
-              |
-              v
-        Structured result
-              |
-              v
-        Generative UI
-```
+  +----------------------+
+  |                      |
+  | Website inspection   |
+  | required             |
+  v                      |
+inspectWebsite tool      |
+  |                      |
+  v                      |
+Fetch website            |
+  |
+  v
+Extract metadata
+  |
+  +--> URL
+  +--> HTTP status
+  +--> Page title
+  +--> Meta description
+  |
+  v
+Structured tool result
+  |
+  v
+Generative UI
 
-## Tool Contract
 
-### `inspectWebsite`
 
-The `inspectWebsite` tool accepts a website URL and returns basic website metadata.
+Step-by-step
+The user enters a website URL.
+The frontend sends the request to /api/chat.
+The server converts the UI messages into model messages.
+Google Gemini processes the request.
+When website inspection is required, Gemini calls inspectWebsite.
+The tool receives the website URL.
+Zod validates the URL.
+The tool performs the website request server-side.
+The HTML response is inspected.
+The tool extracts the page title and meta description.
+The structured result is returned to the AI workflow.
+The frontend displays the result as a structured UI card.
+Server-Side Tool
+inspectWebsite
 
-### Input
+The main tool is located at:
 
-```ts
+app/api/tools/inspect-website.ts
+
+The tool is responsible for inspecting a website and returning structured metadata.
+
+Tool description
+Inspect a website URL and return basic metadata such as title,
+description, and status.
+Input schema
+
+The tool uses Zod to validate its input:
+
 {
   url: string;
 }
-```
 
-The URL is validated before the tool is executed.
+The URL must be a valid URL.
 
-## API Protection
+Example:
 
-The production chat route includes basic protection against oversized requests.
+https://example.com
+Tool result
 
-### Message limit
+A successful inspection returns structured data similar to:
+
+{
+  url: "https://example.com",
+  status: 200,
+  title: "Example Domain",
+  description: "Example website description",
+  success: true
+}
+
+The result is then displayed through the application's UI.
+
+AI Route
+
+The AI route is located at:
+
+app/api/chat/route.ts
+
+The route:
+
+Validates incoming messages
+Limits the number of messages
+Limits message size
+Converts UI messages into model messages
+Connects to Google Gemini
+Registers the inspectWebsite tool
+Streams the AI response
+Returns a UI message stream
+
+The AI model currently used is:
+
+Gemini 3.6 Flash
+
+The route also defines:
+
+export const maxDuration = 30;
+
+This prevents unnecessarily long-running streaming requests.
+
+Request Protection
+
+The application includes basic server-side request protection.
+
+Maximum messages
 
 A request can contain a maximum of:
 
-```text
 20 messages
-```
 
-### Message size limit
+Requests exceeding this limit receive:
+
+400 Bad Request
+Maximum message length
 
 Each message is limited to:
 
-```text
 4,000 characters
-```
 
-Requests exceeding these limits receive a `400 Bad Request` response instead of being sent to the AI model.
+This helps prevent unnecessarily large requests from being sent to the AI model.
 
-### Streaming timeout
+Streaming timeout
 
-The AI route defines:
+The API route uses:
 
-```ts
 export const maxDuration = 30;
-```
 
-This prevents a streaming request from running indefinitely.
+This limits the maximum execution duration of the streaming request.
 
-These protections reduce the risk of trivial abuse and unnecessary AI API usage.
+Generative UI
 
-## Environment Variables
+The key concept demonstrated by this project is Generative UI.
 
-Create a local `.env.local` file:
+Traditional AI applications often display tool results as raw JSON.
 
-```env
+For example:
+
+{
+  "url": "https://example.com",
+  "status": 200,
+  "title": "Example Domain"
+}
+
+This project instead transforms the structured data into a visual result card containing:
+
+Website URL
+HTTP status
+Page title
+Meta description
+Success state
+
+This makes the tool result easier for users to understand.
+
+UI States
+
+The application demonstrates multiple interface states.
+
+Idle
+
+The user sees:
+
+Inspect Website
+
+and can submit a website for inspection.
+
+Loading
+
+While the request is being processed, the interface displays a loading state and prevents duplicate requests.
+
+Success
+
+After a successful inspection, the application displays:
+
+Website inspected successfully
+
+along with the structured website metadata.
+
+Error
+
+If the request fails, the application displays an error message instead of crashing.
+
+Environment Variables
+
+Create a .env.local file in the project root:
+
 GOOGLE_GENERATIVE_AI_API_KEY=your_google_generative_ai_api_key
-```
 
-The API key is only used server-side and should never be committed to Git.
+The API key is used only on the server.
 
-### Environment Variable Table
+Never commit .env.local or expose the API key in client-side code.
 
-| Variable                       | Required | Purpose                                 |
-| ------------------------------ | -------- | --------------------------------------- |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Yes      | Authenticates requests to Google Gemini |
-
-## Local Development
-
-### 1. Clone the repository
-
-```bash
+Environment variable
+Variable	Required	Purpose
+GOOGLE_GENERATIVE_AI_API_KEY	Yes	Authenticates Google Gemini requests
+Installation
+1. Clone the repository
 git clone https://github.com/saadsaleem545/fe-07-tool-ui.git
+2. Enter the project directory
 cd fe-07-tool-ui
-```
-
-### 2. Install dependencies
-
-```bash
+3. Install dependencies
 npm install
-```
+4. Configure environment variables
 
-### 3. Configure environment variables
+Create:
 
-Create `.env.local`:
+.env.local
 
-```env
+Add:
+
 GOOGLE_GENERATIVE_AI_API_KEY=your_google_generative_ai_api_key
-```
-
-### 4. Start the development server
-
-```bash
+5. Start the development server
 npm run dev
-```
 
 Open:
 
-```text
 http://localhost:3000
-```
+Testing
 
-## Production Build
+The project uses Vitest and Testing Library.
 
-To verify the project can be built for production:
+Run the test suite:
 
-```bash
-npm run build
-```
-
-The production server can then be started with:
-
-```bash
-npm start
-```
-
-## Testing
-
-Run the test suite with:
-
-```bash
 npm test
-```
 
 For a single test run:
 
-```bash
 npm run test:run
-```
+Latest verified test result
+Test Files  1 passed (1)
+Tests       6 passed (6)
 
-## Project Structure
+All six automated tests are currently passing.
 
-```text
+Tested behavior
+
+The test suite verifies:
+
+Website Inspector idle state
+Empty URL error handling
+Loading state
+Successful API response
+Failed API request
+Keyboard focus accessibility
+Production Build
+
+To verify the production build:
+
+npm run build
+
+Start the production server:
+
+npm start
+
+The production build should be verified before deployment.
+
+Project Structure
 fe-07-tool-ui/
+|
 ├── app/
 │   ├── api/
 │   │   ├── chat/
 │   │   │   └── route.ts
+│   │   │
 │   │   └── tools/
 │   │       └── inspect-website.ts
+│   │
 │   ├── error.tsx
 │   ├── layout.tsx
+│   ├── page.tsx
 │   ├── page.test.tsx
-│   └── page.tsx
+│   └── ...
+│
 ├── components/
+│
 ├── public/
+│
 ├── package.json
 ├── tsconfig.json
+├── vitest.config.ts
 └── README.md
-```
+Important Files
+app/page.tsx
 
-### Important Files
+Contains the main Website Inspector interface.
 
-**`app/page.tsx`**
+Responsibilities include:
 
-Contains the main Generative UI experience and chat interface.
+URL input
+Inspect Website button
+Loading state
+Error state
+Structured inspection result
+Responsive UI
+app/api/chat/route.ts
 
-**`app/api/chat/route.ts`**
+Handles:
 
-Handles AI requests, streaming responses, tool execution, request validation, and the 30-second streaming limit.
+AI requests
+Google Gemini integration
+Tool registration
+Message conversion
+Request validation
+Streaming responses
+Request limits
+app/api/tools/inspect-website.ts
 
-**`app/api/tools/inspect-website.ts`**
+Contains the server-side website inspection tool.
 
-Contains the server-side website inspection tool and its validation logic.
+Responsibilities include:
 
-**`components/`**
+Zod URL validation
+Website fetching
+HTTP status handling
+HTML processing
+Title extraction
+Meta description extraction
+Structured result generation
+app/page.test.tsx
 
-Contains reusable UI components used to render the application and tool results.
+Contains automated tests for the Website Inspector UI and its different states.
 
-## Design Decisions
+Design Decisions
+Why server-side tools?
 
-### Why server-side tools?
+The website inspection logic runs on the server.
 
-The website inspection tool runs on the server so that external requests and tool logic are not unnecessarily exposed to the browser.
+This prevents unnecessary exposure of server-side implementation details and keeps external website requests away from the browser.
 
-### Why Zod?
+Why Zod?
 
-Zod provides explicit runtime validation for tool inputs. This prevents malformed data from reaching the tool implementation.
+Zod provides runtime validation for tool inputs.
 
-### Why streaming?
+This ensures that the tool receives a properly formatted website URL before attempting the request.
 
-Streaming allows the assistant response to appear progressively instead of making the user wait for the complete response.
+Why streaming?
 
-### Why Generative UI?
+Streaming allows AI responses to be delivered progressively instead of waiting for the entire response before updating the interface.
 
-Instead of displaying raw tool JSON, the application turns structured tool results into readable interface components. This makes the AI interaction easier to understand and demonstrates how AI output can directly drive UI.
+Why Generative UI?
 
-## AI-Assisted Development
+Generative UI allows structured AI/tool output to be transformed into interface components.
 
-AI tools were used as development assistants throughout the project.
+Instead of showing raw JSON, the application presents useful information such as:
+
+Website
+HTTP Status
+Page Title
+Meta Description
+
+This creates a more understandable AI-powered user experience.
+
+AI-Assisted Development
+
+AI tools were used as development assistants during the project.
 
 They helped with:
 
-* Understanding the AI SDK and tool-calling workflow
-* Debugging Next.js and TypeScript errors
-* Designing the `inspectWebsite` tool structure
-* Creating and refining Zod validation
-* Improving loading, success, and error states
-* Reviewing production-readiness issues
-* Adding request-size limits and streaming timeout protection
-* Improving documentation
+Understanding AI SDK concepts
+Understanding server-side tool calling
+Debugging Next.js and TypeScript issues
+Designing the inspectWebsite tool
+Creating Zod validation
+Improving loading and error states
+Creating automated tests
+Reviewing request validation
+Improving project documentation
 
-The final implementation was reviewed and tested manually. AI-generated suggestions were adapted to the project's actual architecture rather than copied without verification.
+All generated suggestions were reviewed, adapted, and tested against the actual project implementation.
 
-## Production Checklist
+Assignment Requirements
 
-Before considering the project production-ready:
+This project demonstrates the major requirements of the FE-07 Generative UI assignment:
 
-* [x] Production build succeeds
-* [x] TypeScript compilation succeeds
-* [x] AI route is server-side
-* [x] Tool input is validated
-* [x] Request size is limited
-* [x] Streaming duration is limited
-* [ ] Production environment variable configured
-* [ ] Production URL verified
-* [ ] Cross-browser testing completed
-* [ ] Mobile testing completed
-* [ ] Final README reviewed
+ Server-side AI tool
+ Zod input schema
+ Tool execution function
+ AI tool registration
+ Tool lifecycle/loading state
+ Structured tool result
+ Result rendered as UI
+ User interaction
+ Error handling
+ Automated tests
+ README documentation
+Production Checklist
 
-## Screenshots
+Before final deployment:
 
-Add screenshots of the running application here.
+ Server-side AI route implemented
+ Server-side tool implemented
+ Zod validation implemented
+ Request size limits implemented
+ Streaming timeout configured
+ Loading state implemented
+ Success state implemented
+ Error state implemented
+ Automated tests passing
+ Production build verified
+ Production environment variable configured
+ Vercel deployment completed
+ Production URL verified
+ Mobile testing completed
+ Cross-browser testing completed
+ Final screenshots added
+Screenshots
+
+Screenshots can be added here after the final UI verification.
 
 Recommended screenshots:
 
-1. Main chat interface
-2. Tool execution/loading state
-3. Successful website inspection result
-4. Error state
+Website Inspector idle state
+Website inspection loading state
+Successful inspection result
+Error state
 
-Example:
+Example structure:
 
-```text
 screenshots/
-├── chat-interface.png
-├── tool-result.png
+├── idle-state.png
+├── loading-state.png
+├── success-state.png
 └── error-state.png
-```
+Repository
 
-## Repository
+GitHub Repository:
 
-**GitHub:**
 https://github.com/saadsaleem545/fe-07-tool-ui
 
-## License
+License
 
-This project was created as part of the Frontend AI Engineering track and is intended for educational and portfolio purposes.
+This project was created as part of the Frontend AI Engineering — FE-07 Generative UI assignment and is intended for educational and portfolio purposes.

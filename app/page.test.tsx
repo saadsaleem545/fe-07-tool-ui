@@ -1,116 +1,154 @@
-import { act } from "react";
-import { fireEvent, render, screen, cleanup } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import Home from "./page";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
-  vi.useRealTimers();
 });
 
-describe("Generate button", () => {
-  it("shows the Generate button in the idle state", () => {
+describe("Website Inspector", () => {
+  it("shows the Website Inspector in the idle state", () => {
     render(<Home />);
 
     expect(
-      screen.getByRole("button", { name: "Generate" })
+      screen.getByRole("heading", { name: "Website Inspector" })
     ).toBeInTheDocument();
 
-    expect(screen.getByText("idle")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Inspect Website" })
+    ).toBeInTheDocument();
+
+    expect(screen.getByLabelText("Website URL")).toBeInTheDocument();
   });
 
-  it("changes to loading after clicking Generate", () => {
-    vi.useFakeTimers();
-
+  it("shows an error when no URL is provided", () => {
     render(<Home />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Generate" })
+      screen.getByRole("button", { name: "Inspect Website" })
     );
 
     expect(
-      screen.getByRole("button", { name: "Generating..." })
-    ).toBeDisabled();
-
-    expect(screen.getByText("loading")).toBeInTheDocument();
+      screen.getByText("Please enter a website URL.")
+    ).toBeInTheDocument();
   });
 
-  it("does not allow another click while loading", () => {
-    vi.useFakeTimers();
+  it("changes to loading while the request is pending", async () => {
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>(() => {
+          // Keep request pending
+        })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<Home />);
 
+    const input = screen.getByLabelText("Website URL");
     const button = screen.getByRole("button", {
-      name: "Generate",
+      name: "Inspect Website",
+    });
+
+    fireEvent.change(input, {
+      target: { value: "https://example.com" },
     });
 
     fireEvent.click(button);
 
-    const loadingButton = screen.getByRole("button", {
-      name: "Generating...",
-    });
+    expect(
+      screen.getByRole("button", { name: "Inspecting..." })
+    ).toBeDisabled();
 
-    expect(loadingButton).toBeDisabled();
+    expect(
+      screen.getByText("Inspecting website...")
+    ).toBeInTheDocument();
 
-    fireEvent.click(loadingButton);
-
-    expect(screen.getByText("loading")).toBeInTheDocument();
+    expect(
+      screen.getByText("AI is calling the inspectWebsite tool.")
+    ).toBeInTheDocument();
   });
 
-  it("shows success when the simulated request succeeds", () => {
-    vi.useFakeTimers();
-
-    vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0.5);
+  it("shows the inspection result when the API succeeds", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            title: "Example Domain",
+            description: "This domain is for use in illustrative examples.",
+            status: 200,
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        )
+      )
+    );
 
     render(<Home />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Generate" })
-    );
-
-    act(() => {
-      vi.advanceTimersByTime(3000);
+    fireEvent.change(screen.getByLabelText("Website URL"), {
+      target: { value: "https://example.com" },
     });
 
-    expect(
-      screen.getByRole("button", { name: "Generated!" })
-    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Inspect Website" })
+    );
 
-    expect(screen.getByText("success")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Website inspected successfully")
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Example Domain")).toBeInTheDocument();
+    expect(screen.getByText("200 OK")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This domain is for use in illustrative examples."
+      )
+    ).toBeInTheDocument();
   });
 
-  it("shows error when the simulated request fails", () => {
-    vi.useFakeTimers();
-
-    vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0.1);
+  it("shows an error when the API request fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(
+        new Error("The AI service returned an error.")
+      )
+    );
 
     render(<Home />);
 
+    fireEvent.change(screen.getByLabelText("Website URL"), {
+      target: { value: "https://example.com" },
+    });
+
     fireEvent.click(
-      screen.getByRole("button", { name: "Generate" })
+      screen.getByRole("button", { name: "Inspect Website" })
     );
 
-    act(() => {
-      vi.advanceTimersByTime(3000);
+    await waitFor(() => {
+      expect(
+        screen.getByText("Inspection failed")
+      ).toBeInTheDocument();
     });
 
     expect(
-      screen.getByRole("button", { name: "Try again" })
+      screen.getByText("The AI service returned an error.")
     ).toBeInTheDocument();
-
-    expect(screen.getByText("error")).toBeInTheDocument();
   });
 
   it("can be focused with the keyboard", () => {
     render(<Home />);
 
     const button = screen.getByRole("button", {
-      name: "Generate",
+      name: "Inspect Website",
     });
 
     button.focus();
@@ -118,4 +156,3 @@ describe("Generate button", () => {
     expect(button).toHaveFocus();
   });
 });
-
